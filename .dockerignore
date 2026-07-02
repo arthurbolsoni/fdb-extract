@@ -1,0 +1,10 @@
+# Keep the build context tiny — never ship the multi-GB databases or build output.
+target/
+dist/
+.git/
+*.fdb
+*.FDB
+*.cdc.json
+node_modules/
+*.exe
+_pki/

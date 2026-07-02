@@ -1,0 +1,12 @@
+node_modules
+*.FDB
+target/
+data/
+*.csv
+.env
+
+*.json
+!package.json
+
+# Built deliverables: binaries + private keys (PKI). Never commit.
+dist/

@@ -1,0 +1,46 @@
+# systemd unit for the fdb-ingest gateway (VPS).
+#
+# Install:
+#   sudo cp target/release/fdb-ingest /opt/fdb-ingest/fdb-ingest
+#   sudo mkdir -p /opt/fdb-ingest/pki /etc/fdb-ingest
+#   # put ca.crt, server.crt, server.key under /opt/fdb-ingest/pki  (see DEPLOY.md)
+#   # put PGPASSWORD=... in /etc/fdb-ingest/env  (chmod 600)
+#   sudo cp deploy/fdb-ingest.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now fdb-ingest
+#
+# PostgreSQL must bind 127.0.0.1 only. The only port this host exposes is 8443
+# (or whatever you front with an L4 passthrough). TLS is validated in-process.
+
+[Unit]
+Description=fdb-ingest — Firebird→PostgreSQL push gateway (mTLS)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=fdbingest
+Group=fdbingest
+WorkingDirectory=/opt/fdb-ingest
+EnvironmentFile=/etc/fdb-ingest/env
+# One --tenant CN=database per customer. Add more as you onboard tenants.
+ExecStart=/opt/fdb-ingest/fdb-ingest serve \
+    --bind 0.0.0.0:8443 \
+    --ca   /opt/fdb-ingest/pki/ca.crt \
+    --cert /opt/fdb-ingest/pki/server.crt \
+    --key  /opt/fdb-ingest/pki/server.key \
+    --pg-host 127.0.0.1 --pg-port 5432 --pg-user fdb_writer \
+    --tenant acme=replica_acme
+
+Restart=on-failure
+RestartSec=3
+
+# Hardening — gateway only needs to read its pki dir and talk to localhost PG.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/opt/fdb-ingest
+# CA private key (ca.key) does NOT need to live here at runtime — keep it offline.
+
+[Install]
+WantedBy=multi-user.target
