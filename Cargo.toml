@@ -3,6 +3,8 @@ name = "fdb-extract"
 version = "0.1.0"
 edition = "2021"
 description = "Fast Firebird table extractor — direct ODS page reading, no server needed"
+license = "MIT"
+repository = "https://github.com/arthurbolsoni/fdb-extract"
 
 [[bin]]
 name = "fdb-extract"
